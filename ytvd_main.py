@@ -28,6 +28,13 @@ def main() -> None:
     root.withdraw()
 
     video_url = input("Enter YouTube video URL: ")
+    save_dir = open_file_dialog()
+
+    if save_dir:
+        print("Download started...")
+        download_video(video_url, save_dir)
+    else:
+        print("Invalid save location.")
 
 
 if __name__ == '__main__':
