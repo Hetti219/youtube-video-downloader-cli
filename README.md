@@ -18,6 +18,9 @@ A fast, feature-rich command-line tool for downloading YouTube videos and audio,
   - Ubuntu/Debian: `sudo apt install ffmpeg`
   - macOS: `brew install ffmpeg`
   - Windows: Download from [ffmpeg.org](https://ffmpeg.org/download.html)
+- **aria2c** *(optional, for faster downloads)* — enables multi-connection downloading.
+  - Ubuntu/Debian: `sudo apt install aria2`
+  - macOS: `brew install aria2`
 
 ## Installation
 
