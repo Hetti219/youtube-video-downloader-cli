@@ -84,6 +84,18 @@ def build_ydl_opts(args: argparse.Namespace) -> dict:
 
         # Bypass YouTube's bandwidth throttle on DASH streams.
         "throttled_rate": "100K",
+
+        # ── Extraction Hang Fixes (5-minute delay workaround) ────────
+        # Force IPv4. IPv6 connections to YouTube frequently hang or time out.
+        "source_address": "0.0.0.0",
+        
+        # Impersonate specific mobile/TV clients to bypass web bot-protection routines
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["android", "web"],
+                "po_token": ["web+web"],  # Help bypass Proof-of-Work checks
+            }
+        },
     }
 
     # Use aria2c as external downloader for multi-connection speed boost
