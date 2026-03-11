@@ -6,6 +6,7 @@ A command-line tool for downloading YouTube videos and audio using yt-dlp.
 
 import argparse
 import re
+import shutil
 import sys
 
 import yt_dlp
@@ -13,7 +14,7 @@ import yt_dlp
 
 # ── Constants ────────────────────────────────────────────────────────────────
 
-VERSION = "2.0.0"
+VERSION = "2.1.0"
 
 YOUTUBE_URL_PATTERN = re.compile(
     r"(https?://)?(www\.)?"
@@ -50,6 +51,11 @@ def validate_url(url: str) -> bool:
     return bool(YOUTUBE_URL_PATTERN.match(url))
 
 
+def _find_aria2c() -> str | None:
+    """Return path to aria2c if installed, else None."""
+    return shutil.which("aria2c")
+
+
 def build_ydl_opts(args: argparse.Namespace) -> dict:
     """Build the yt-dlp options dict from parsed CLI arguments."""
     outtmpl = f"{args.output}/%(title)s.%(ext)s"
@@ -60,7 +66,37 @@ def build_ydl_opts(args: argparse.Namespace) -> dict:
         "quiet": False,
         "no_warnings": False,
         "progress_hooks": [_progress_hook],
+
+        # ── Speed optimizations ──────────────────────────────────────
+        # Enable Node.js as the JavaScript runtime so yt-dlp can
+        # extract the full (un-throttled) format list from YouTube.
+        "js_runtimes": {"node": {}},
+
+        # Download up to 8 DASH/HLS fragments at once.
+        "concurrent_fragment_downloads": 8,
+
+        # Use 10 MiB HTTP chunks for faster throughput.
+        "http_chunk_size": 10_485_760,
+
+        # Retry resilience
+        "retries": 10,
+        "fragment_retries": 10,
+
+        # Bypass YouTube's bandwidth throttle on DASH streams.
+        "throttled_rate": "100K",
     }
+
+    # Use aria2c as external downloader for multi-connection speed boost
+    aria2c = _find_aria2c()
+    if aria2c:
+        ydl_opts["external_downloader"] = "aria2c"
+        ydl_opts["external_downloader_args"] = {
+            "aria2c": [
+                "--min-split-size=1M",
+                "--max-connection-per-server=16",
+                "--split=16",
+            ]
+        }
 
     if args.audio_only:
         ydl_opts["format"] = "bestaudio/best"
